@@ -132,17 +132,8 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({ 
       audio.play();
       setIsPlaying(true);
     } catch (err: any) {
-      console.warn('Neural TTS failed, falling back to Web Speech API:', err.message);
-      // Fallback to browser TTS if network is unavailable
-      if ('speechSynthesis' in window) {
-        const clean = briefing.replace(/[#*`_~>\-]/g, ' ');
-        const utter = new SpeechSynthesisUtterance(clean);
-        utter.lang = 'tr-TR';
-        utter.rate = speechRate;
-        utter.onend = () => setIsPlaying(false);
-        window.speechSynthesis.speak(utter);
-        setIsPlaying(true);
-      }
+      console.error('[TTS Error]:', err.message);
+      setIsPlaying(false);
     } finally {
       setTtsLoading(false);
     }
