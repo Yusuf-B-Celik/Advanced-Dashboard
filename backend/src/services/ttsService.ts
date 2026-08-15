@@ -28,24 +28,46 @@ export class TTSService {
 
     return new Promise<Buffer>((resolve, reject) => {
       const chunks: Buffer[] = [];
+      let isResolved = false;
+
+      const finishSuccess = () => {
+        if (!isResolved) {
+          isResolved = true;
+          const totalBuffer = Buffer.concat(chunks);
+          if (totalBuffer.length > 1000) {
+            resolve(totalBuffer);
+          } else {
+            reject(new Error('Ses verisi yetersiz.'));
+          }
+        }
+      };
+
       const timer = setTimeout(() => {
         if (chunks.length > 0) {
-          resolve(Buffer.concat(chunks));
-        } else {
+          finishSuccess();
+        } else if (!isResolved) {
+          isResolved = true;
           reject(new Error('TTS Zaman Aşımı'));
         }
-      }, 15000);
+      }, 8000);
 
-      audioStream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      audioStream.on('data', (chunk: Buffer) => {
+        chunks.push(chunk);
+      });
+
       audioStream.on('end', () => {
         clearTimeout(timer);
-        resolve(Buffer.concat(chunks));
+        finishSuccess();
       });
+
       audioStream.on('error', (err: any) => {
-        clearTimeout(timer);
+        // If Microsoft closed the socket after sending data, don't fail if we have the audio!
         if (chunks.length > 0) {
-          resolve(Buffer.concat(chunks));
-        } else {
+          clearTimeout(timer);
+          finishSuccess();
+        } else if (!isResolved) {
+          clearTimeout(timer);
+          isResolved = true;
           reject(err);
         }
       });
@@ -77,11 +99,11 @@ export class TTSService {
       .replace(/€(\d+[\d,.]*)/g, '$1 Euro')
       .replace(/%(\d+)/g, 'yüzde $1')
       .replace(/(\d+)%/g, 'yüzde $1')
-      // Format newlines as pauses
+      // Format newlines as natural speech pauses
       .replace(/\n+/g, '. ')
       .replace(/\s+/g, ' ')
       .trim()
-      .slice(0, 2000);
+      .slice(0, 1500);
   }
 }
 
