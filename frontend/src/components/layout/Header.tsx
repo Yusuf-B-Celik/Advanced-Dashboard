@@ -1,0 +1,288 @@
+import React, { useState } from 'react';
+import { 
+  Sparkles, 
+  Plus, 
+  Settings, 
+  Lock, 
+  Unlock, 
+  Search, 
+  Bot, 
+  Maximize, 
+  Minimize, 
+  Flame, 
+  TrendingUp, 
+  Newspaper, 
+  Cpu, 
+  Layers, 
+  CheckSquare, 
+  Radio,
+  LayoutGrid,
+  Maximize2
+} from 'lucide-react';
+import { useDashboard } from '../../contexts/DashboardContext';
+
+interface HeaderProps {
+  onOpenWidgetGallery: () => void;
+  onOpenSettings: () => void;
+  onOpenAIAssistant: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({
+  onOpenWidgetGallery,
+  onOpenSettings,
+  onOpenAIAssistant,
+}) => {
+  const { 
+    activeWorkspace, 
+    setActiveWorkspace, 
+    searchQuery, 
+    setSearchQuery, 
+    isLayoutLocked, 
+    setIsLayoutLocked,
+    viewMode,
+    toggleViewMode,
+    finance,
+    news
+  } = useDashboard();
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
+
+  const workspaces = [
+    { id: 'all', label: 'Tümü', icon: Layers },
+    { id: 'genel', label: 'Genel Bakış', icon: Sparkles },
+    { id: 'haberler', label: 'Haber & Finans', icon: Newspaper },
+    { id: 'sistem', label: 'Sistem & Kod', icon: Cpu },
+    { id: 'odaklanma', label: 'Odak & Üretkenlik', icon: Flame },
+  ];
+
+  // Quick ticker items
+  const usd = finance.find(f => f.code === 'USDTRY');
+  const eur = finance.find(f => f.code === 'EURTRY');
+  const gold = finance.find(f => f.code === 'GA');
+  const btc = finance.find(f => f.code === 'BTC');
+  const latestNews = news[0];
+
+  return (
+    <header className="sticky top-0 z-40 flex flex-col glass-panel border-b border-white/10 backdrop-blur-xl">
+      {/* Top Live Micro-Ticker Bar */}
+      <div className="px-4 py-1.5 bg-black/40 border-b border-white/5 flex items-center justify-between text-[11px] text-gray-400 overflow-x-auto gap-4">
+        {/* Market Ticker */}
+        <div className="flex items-center gap-4 shrink-0 font-medium">
+          {usd && (
+            <span className="flex items-center gap-1">
+              <span className="text-gray-400">USD:</span>
+              <strong className="text-white">{usd.sell}₺</strong>
+              <span className={usd.changeRate >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                %{usd.changeRate}
+              </span>
+            </span>
+          )}
+          {eur && (
+            <span className="flex items-center gap-1">
+              <span className="text-gray-400">EUR:</span>
+              <strong className="text-white">{eur.sell}₺</strong>
+              <span className={eur.changeRate >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                %{eur.changeRate}
+              </span>
+            </span>
+          )}
+          {gold && (
+            <span className="flex items-center gap-1 hidden sm:flex">
+              <span className="text-amber-400 font-semibold">Gr Altın:</span>
+              <strong className="text-white">{gold.sell}₺</strong>
+              <span className="text-emerald-400">%{gold.changeRate}</span>
+            </span>
+          )}
+          {btc && (
+            <span className="flex items-center gap-1 hidden md:flex">
+              <span className="text-orange-400 font-semibold">BTC:</span>
+              <strong className="text-white">${btc.sell?.toLocaleString()}</strong>
+              <span className={btc.changeRate >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                %{btc.changeRate}
+              </span>
+            </span>
+          )}
+        </div>
+
+        {/* Breaking News marquee */}
+        {latestNews && (
+          <div className="flex items-center gap-2 truncate text-gray-300">
+            <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-bold text-[9px] uppercase tracking-wider shrink-0 border border-rose-500/30">
+              Son Dakika
+            </span>
+            <span className="truncate text-[11px] text-gray-200">
+              {latestNews.title}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Main Navigation Header */}
+      <div className="px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
+        {/* Left: Brand Logo & Title */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-pink-500 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
+            <div className="w-full h-full bg-dark-900 rounded-[14px] flex items-center justify-center text-cyan-400 font-black text-lg">
+              Ω
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-extrabold text-white tracking-wide">
+                NEXUS <span className="gradient-text-cyan">DASHBOARD</span>
+              </h1>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 uppercase">
+                MiniMax-M3
+              </span>
+            </div>
+            <span className="text-[10px] text-gray-400 hidden sm:block">
+              Yerel Yapay Zeka & Türkçe Haber Bilgi Merkezi
+            </span>
+          </div>
+        </div>
+
+        {/* Center: Workspaces Selector & View Mode Toggle */}
+        <div className="hidden lg:flex items-center gap-2">
+          <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.03] border border-white/5">
+            {workspaces.map(ws => {
+              const Icon = ws.icon;
+              const isActive = activeWorkspace === ws.id;
+              return (
+                <button
+                  key={ws.id}
+                  onClick={() => setActiveWorkspace(ws.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition ${
+                    isActive
+                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{ws.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Compact / Expanded View Mode Toggle */}
+          <button
+            onClick={toggleViewMode}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition ${
+              viewMode === 'compact'
+                ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
+                : 'bg-purple-500/15 text-purple-300 border-purple-500/40'
+            }`}
+            title="Kuşbakışı (Kompakt) ve Genişletilmiş Görünüm Arasında Geçiş Yap"
+          >
+            {viewMode === 'compact' ? (
+              <>
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Kompakt (Tıkla-Aç)</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Genişletilmiş Mod</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
+          {/* Search Box */}
+          <div className="relative hidden sm:block w-40 md:w-52">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Widget / Haber ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+            />
+          </div>
+
+          {/* Add Widget Button */}
+          <button
+            onClick={onOpenWidgetGallery}
+            className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-xs flex items-center gap-1.5 shadow-md shadow-cyan-500/20 transition"
+            title="Yeni Widget Ekle"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Widget Ekle</span>
+          </button>
+
+          {/* Lock / Unlock Layout */}
+          <button
+            onClick={() => setIsLayoutLocked(!isLayoutLocked)}
+            className={`p-2 rounded-xl border transition ${
+              isLayoutLocked
+                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                : 'bg-white/5 hover:bg-white/10 text-gray-300 border-white/10'
+            }`}
+            title={isLayoutLocked ? 'Yerleşim Kilitli (Düzenlemek için tıkla)' : 'Yerleşim Düzenlenebilir'}
+          >
+            {isLayoutLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+          </button>
+
+          {/* Fullscreen Button */}
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition hidden md:block"
+            title="Tam Ekran"
+          >
+            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
+
+          {/* Settings Button */}
+          <button
+            onClick={onOpenSettings}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 transition"
+            title="Ayarlar & Temalar"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Workspaces & View Switcher Strip */}
+      <div className="flex lg:hidden items-center justify-between px-4 py-2 border-t border-white/5 overflow-x-auto gap-2">
+        <div className="flex items-center gap-1">
+          {workspaces.map(ws => {
+            const Icon = ws.icon;
+            const isActive = activeWorkspace === ws.id;
+            return (
+              <button
+                key={ws.id}
+                onClick={() => setActiveWorkspace(ws.id)}
+                className={`px-2.5 py-1 rounded-xl text-xs font-semibold flex items-center gap-1 whitespace-nowrap transition ${
+                  isActive
+                    ? 'bg-cyan-500 text-black'
+                    : 'text-gray-400 hover:text-white bg-white/5'
+                }`}
+              >
+                <Icon className="w-3 h-3" />
+                <span>{ws.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={toggleViewMode}
+          className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0"
+        >
+          {viewMode === 'compact' ? 'Kompakt' : 'Geniş'}
+        </button>
+      </div>
+    </header>
+  );
+};
