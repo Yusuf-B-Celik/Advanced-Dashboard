@@ -18,7 +18,10 @@ import {
   Radio,
   LayoutGrid,
   Maximize2,
-  Smartphone
+  Smartphone,
+  Headphones,
+  Sliders,
+  ChevronDown
 } from 'lucide-react';
 import { useDashboard } from '../../contexts/DashboardContext';
 
@@ -27,6 +30,7 @@ interface HeaderProps {
   onOpenSettings: () => void;
   onOpenAIAssistant: () => void;
   onOpenMobileTunnel: () => void;
+  onOpenExecutiveBriefing: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -34,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onOpenAIAssistant,
   onOpenMobileTunnel,
+  onOpenExecutiveBriefing,
 }) => {
   const { 
     activeWorkspace, 
@@ -44,9 +49,12 @@ export const Header: React.FC<HeaderProps> = ({
     setIsLayoutLocked,
     viewMode,
     toggleViewMode,
+    applyPreset,
     finance,
     news
   } = useDashboard();
+
+  const [presetDropdownOpen, setPresetDropdownOpen] = useState(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -244,6 +252,75 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
           </button>
+
+          {/* Executive Daily Briefing Button */}
+          <button
+            onClick={onOpenExecutiveBriefing}
+            className="px-2.5 py-2 rounded-xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-300 border border-pink-500/30 transition flex items-center gap-1.5 shadow-md shadow-pink-500/10"
+            title="Günün Sesli Yönetici Brifingi"
+          >
+            <Headphones className="w-4 h-4 text-pink-400" />
+            <span className="hidden xl:inline text-xs font-bold">Günün Brifingi</span>
+          </button>
+
+          {/* Smart Layout Presets Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setPresetDropdownOpen(!presetDropdownOpen)}
+              className="px-2.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 transition flex items-center gap-1 text-xs font-semibold"
+              title="Akıllı Rol Şablonları (Presets)"
+            >
+              <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden lg:inline">Rol Modları</span>
+              <ChevronDown className="w-3 h-3 text-gray-400" />
+            </button>
+
+            {presetDropdownOpen && (
+              <div 
+                className="absolute right-0 top-full mt-2 w-56 glass-panel rounded-2xl p-1.5 border border-white/15 shadow-2xl z-50 animate-in fade-in zoom-in-95 space-y-1"
+                onClick={() => setPresetDropdownOpen(false)}
+              >
+                <div className="px-2.5 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  Akıllı Düzen Şablonları
+                </div>
+                <button
+                  onClick={() => applyPreset('all')}
+                  className="w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold hover:bg-white/10 text-white flex items-center gap-2 transition"
+                >
+                  <span className="p-1 rounded-lg bg-cyan-500/20 text-cyan-300">🎛️</span>
+                  <span>Tam Koleksiyon (Tümü)</span>
+                </button>
+                <button
+                  onClick={() => applyPreset('dev')}
+                  className="w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold hover:bg-white/10 text-white flex items-center gap-2 transition"
+                >
+                  <span className="p-1 rounded-lg bg-indigo-500/20 text-indigo-300">💻</span>
+                  <span>Yazılımcı & DevOps</span>
+                </button>
+                <button
+                  onClick={() => applyPreset('finance')}
+                  className="w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold hover:bg-white/10 text-white flex items-center gap-2 transition"
+                >
+                  <span className="p-1 rounded-lg bg-emerald-500/20 text-emerald-300">📈</span>
+                  <span>Borsa & Finans Trader</span>
+                </button>
+                <button
+                  onClick={() => applyPreset('focus')}
+                  className="w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold hover:bg-white/10 text-white flex items-center gap-2 transition"
+                >
+                  <span className="p-1 rounded-lg bg-amber-500/20 text-amber-300">🧘</span>
+                  <span>Odaklanma & Üretkenlik</span>
+                </button>
+                <button
+                  onClick={() => applyPreset('news')}
+                  className="w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-semibold hover:bg-white/10 text-white flex items-center gap-2 transition"
+                >
+                  <span className="p-1 rounded-lg bg-rose-500/20 text-rose-300">📰</span>
+                  <span>Gündem & Araştırma</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Mobile Ngrok Broadcast Button */}
           <button

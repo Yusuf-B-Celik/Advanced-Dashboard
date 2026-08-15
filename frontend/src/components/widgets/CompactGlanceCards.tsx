@@ -434,6 +434,20 @@ export const CompactGlanceCard: React.FC<CompactGlanceProps> = ({ type, onExpand
       );
     }
 
+    case 'websummarizer': {
+      return (
+        <div className="flex flex-col justify-between h-full space-y-1">
+          <p className="text-[11px] text-gray-300">
+            Herhangi bir web veya YouTube URL'sini özetleyin & zihin haritasını çıkarın.
+          </p>
+          <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
+            <span className="text-cyan-400">MiniMax-M3 Scraper</span>
+            <span className="text-cyan-300 font-medium">Analiz Et &gt;</span>
+          </div>
+        </div>
+      );
+    }
+
     default:
       return (
         <div className="flex items-center justify-between h-full text-xs text-gray-400">

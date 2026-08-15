@@ -185,4 +185,11 @@ export interface UserSettings {
   userName: string;
   weatherCity: string;
   viewMode?: 'compact' | 'expanded';
+  telegram?: {
+    botToken: string;
+    chatId: string;
+    enabled: boolean;
+    notifyOnUptimeFail: boolean;
+    notifyDailyBriefing: boolean;
+  };
 }

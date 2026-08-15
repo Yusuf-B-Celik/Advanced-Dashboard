@@ -10,6 +10,8 @@ import { storageService } from './services/storageService';
 import { hackerNewsService } from './services/hackerNewsService';
 import { uptimeService } from './services/uptimeService';
 import { tunnelService } from './services/tunnelService';
+import { scraperService } from './services/scraperService';
+import { telegramBotService } from './services/telegramBotService';
 
 dotenv.config();
 
@@ -313,6 +315,141 @@ app.post('/api/tunnel/stop', async (_req: Request, res: Response) => {
   try {
     await tunnelService.stopTunnel();
     res.json({ success: true, message: 'Tünel sonlandırıldı.' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- WEB & YOUTUBE SCRAPER & MINDMAP ROUTE ---
+app.post('/api/scraper/summarize', async (req: Request, res: Response) => {
+  try {
+    const { url, apiKey, model, planType, apiProtocol } = req.body;
+    if (!url) {
+      return res.status(400).json({ success: false, error: 'URL adresi gereklidir.' });
+    }
+
+    const scraped = await scraperService.scrapeUrl(url);
+
+    // Prompt MiniMax for structured executive summary + Mermaid.js mind map
+    const prompt = `Aşağıdaki web sayfası veya video içeriğini analiz et:
+URL: ${scraped.url}
+Başlık: ${scraped.title}
+Kaynak: ${scraped.siteName}
+İçerik: ${scraped.content}
+
+Lütfen Türkçe olarak şu 3 bölümü hazırla:
+1. 📌 **3 Maddelik Yönetici Özeti**: En can alıcı noktalar.
+2. 💡 **Kilit Çıkarımlar ve Değerlendirme**: Neden önemli ve ne anlama geliyor?
+3. 🧠 **Görsel Zihin Haritası (Mind Map)**: Aşağıdaki formatta bir Mermaid mindmap kodu oluştur (yalnızca \`\`\`mermaid ile başlasın):
+\`\`\`mermaid
+mindmap
+  root((${scraped.title.slice(0, 20)}))
+    Ana Fikir 1
+      Detay 1.1
+      Detay 1.2
+    Ana Fikir 2
+      Detay 2.1
+    Ana Fikir 3
+      Detay 3.1
+\`\`\``;
+
+    const analysis = await minimaxService.createChatCompletion(
+      [
+        { role: 'system', content: 'Sen web ve video içeriklerini analiz edip görsel zihin haritaları (mind map) ve özetler çıkaran uzman bir araştırmacısın.' },
+        { role: 'user', content: prompt }
+      ],
+      { apiKey, model, planType, apiProtocol }
+    );
+
+    res.json({
+      success: true,
+      scraped,
+      analysis
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- TELEGRAM BOT ROUTES ---
+app.get('/api/telegram/config', (_req: Request, res: Response) => {
+  res.json({ success: true, config: telegramBotService.getConfig() });
+});
+
+app.post('/api/telegram/config', async (req: Request, res: Response) => {
+  try {
+    const { config } = req.body;
+    telegramBotService.updateConfig(config);
+
+    // Save to storage
+    const data = storageService.getData();
+    const updatedSettings = { ...(data.settings || {}), telegram: config };
+    storageService.updateData({ settings: updatedSettings });
+
+    res.json({ success: true, config: telegramBotService.getConfig() });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/telegram/test', async (req: Request, res: Response) => {
+  try {
+    const { botToken, chatId } = req.body;
+    if (botToken) {
+      telegramBotService.updateConfig({ botToken, chatId });
+    }
+    const result = await telegramBotService.sendMessage(
+      '🚀 *Nexus Dashboard Bağlantı Testi!*\n\nTelegram Bot entegrasyonunuz başarıyla aktifleştirildi. Artık buradan bildirim alabilir ve dashboard\'unuzu yönetebilirsiniz.',
+      chatId
+    );
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- EXECUTIVE DAILY BRIEFING ROUTE ---
+app.post('/api/ai/briefing', async (req: Request, res: Response) => {
+  try {
+    const { apiKey, model, planType, apiProtocol, userName = 'Kullanıcı', weatherCity = 'İstanbul' } = req.body;
+
+    const [finance, news] = await Promise.all([
+      financeService.getFinanceData().catch(() => []),
+      newsService.fetchAllNews().catch(() => [])
+    ]);
+    const data = storageService.getData();
+
+    const usd = finance.find((f: any) => f.code === 'USDTRY')?.sell || 36.8;
+    const gold = finance.find((f: any) => f.code === 'GA')?.sell || 3470;
+    const btc = finance.find((f: any) => f.code === 'BTC')?.sell || 96000;
+    const topNews = news.slice(0, 3).map((n: any) => n.title).join(' | ');
+    const pendingTasks = (data.tasks || []).filter((t: any) => t.status !== 'done').map((t: any) => t.title).slice(0, 4).join(', ');
+
+    const prompt = `Sayın ${userName} için bugün (${new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}) güne başlama ve Yönetici Brifingi hazırla.
+Bilgiler:
+- Şehir: ${weatherCity}
+- Piyasa: Dolar ${usd}₺, Gram Altın ${gold}₺, Bitcoin $${btc}.
+- Bekleyen Görevler: ${pendingTasks || 'Bugün bekleyen kritik görev yok'}
+- Son Dakika Haber Başlıkları: ${topNews}
+
+Kurallar:
+1. Hitap samimi, motive edici, vizyoner ve profesyonel olsun.
+2. 3 kısa ve akıcı paragraf yaz (TTS sesli okuma için cümleler doğal ve temiz olsun, özel işaret veya karmaşık semboller koyma).
+3. Günün ilham veren bir tavsiyesi veya özlü sözüyle bitir.`;
+
+    const briefing = await minimaxService.createChatCompletion(
+      [
+        { role: 'system', content: 'Sen üst düzey yöneticilere sesli ve yazılı günlük brifing sunan vizyoner bir yapay zeka danışmanısın.' },
+        { role: 'user', content: prompt }
+      ],
+      { apiKey, model, planType, apiProtocol }
+    );
+
+    res.json({
+      success: true,
+      briefing,
+      generatedAt: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+    });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

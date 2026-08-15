@@ -5,6 +5,7 @@ import { GridCanvas } from './components/layout/GridCanvas';
 import { WidgetGalleryModal } from './components/layout/WidgetGalleryModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { MobileTunnelModal } from './components/common/MobileTunnelModal';
+import { ExecutiveBriefingModal } from './components/widgets/ExecutiveBriefingModal';
 import { Bot, Sparkles, X } from 'lucide-react';
 import { AIAssistantWidget } from './components/widgets/AIAssistantWidget';
 
@@ -13,6 +14,7 @@ const DashboardMain: React.FC = () => {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileTunnelOpen, setMobileTunnelOpen] = useState(false);
+  const [briefingOpen, setBriefingOpen] = useState(false);
 
   const getWallpaperClass = () => {
     switch (settings.wallpaper) {
@@ -35,6 +37,7 @@ const DashboardMain: React.FC = () => {
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenAIAssistant={toggleAIPanel}
         onOpenMobileTunnel={() => setMobileTunnelOpen(true)}
+        onOpenExecutiveBriefing={() => setBriefingOpen(true)}
       />
 
       {/* Main Workspace Layout with Smooth Push Grid */}
@@ -115,6 +118,11 @@ const DashboardMain: React.FC = () => {
       <MobileTunnelModal
         isOpen={mobileTunnelOpen}
         onClose={() => setMobileTunnelOpen(false)}
+      />
+
+      <ExecutiveBriefingModal
+        isOpen={briefingOpen}
+        onClose={() => setBriefingOpen(false)}
       />
     </div>
   );

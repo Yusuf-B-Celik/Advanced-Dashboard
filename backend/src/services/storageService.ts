@@ -12,6 +12,7 @@ export interface DashboardData {
     wallpaper?: string;
     refreshIntervalSeconds?: number;
     userName?: string;
+    telegram?: any;
   };
   tasks: Array<{
     id: string;

@@ -16,7 +16,10 @@ import {
   Server,
   Zap,
   CreditCard,
-  Ticket
+  Ticket,
+  Send,
+  MessageSquare,
+  Bell
 } from 'lucide-react';
 import { useDashboard } from '../../contexts/DashboardContext';
 
@@ -39,6 +42,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMsg, setTestMsg] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Telegram Bot Settings State
+  const [telegramToken, setTelegramToken] = useState(settings.telegram?.botToken || '');
+  const [telegramChatId, setTelegramChatId] = useState(settings.telegram?.chatId || '');
+  const [telegramEnabled, setTelegramEnabled] = useState(settings.telegram?.enabled ?? false);
+  const [telegramTestStatus, setTelegramTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [telegramTestMsg, setTelegramTestMsg] = useState('');
 
   if (!isOpen) return null;
 
@@ -81,7 +91,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }
   };
 
-  const handleSave = () => {
+  const handleTestTelegram = async () => {
+    if (!telegramToken.trim() || !telegramChatId.trim()) {
+      setTelegramTestStatus('error');
+      setTelegramTestMsg('Lütfen Bot Token ve Chat ID girin.');
+      return;
+    }
+
+    try {
+      setTelegramTestStatus('testing');
+      setTelegramTestMsg('Telegram mesajı gönderiliyor...');
+      const res = await fetch('/api/telegram/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          botToken: telegramToken.trim(),
+          chatId: telegramChatId.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTelegramTestStatus('success');
+        setTelegramTestMsg('✓ Test mesajı Telegram hesabınıza başarıyla iletildi!');
+      } else {
+        throw new Error(data.error || 'Mesaj gönderilemedi.');
+      }
+    } catch (e: any) {
+      setTelegramTestStatus('error');
+      setTelegramTestMsg(`Hata: ${e.message}`);
+    }
+  };
+
+  const handleSave = async () => {
+    const telegramConfig = {
+      botToken: telegramToken.trim(),
+      chatId: telegramChatId.trim(),
+      enabled: telegramEnabled,
+      notifyOnUptimeFail: true,
+      notifyDailyBriefing: false
+    };
+
     updateSettings({
       minimaxApiKey: apiKey.trim(),
       minimaxPlanType: planType,
@@ -89,8 +138,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       minimaxModel: model,
       minimaxRegion: region,
       minimaxBaseUrl: customBaseUrl.trim(),
-      minimaxGroupId: groupId.trim()
+      minimaxGroupId: groupId.trim(),
+      telegram: telegramConfig
     });
+
+    // Also sync to backend telegram service
+    fetch('/api/telegram/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: telegramConfig })
+    }).catch(() => {});
+
     setSavedSuccess(true);
     setTimeout(() => {
       setSavedSuccess(false);
@@ -381,6 +439,79 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Section 4: Telegram Bot & Remote Control */}
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-950/30 via-cyan-950/20 to-black/40 border border-blue-500/30 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Send className="w-5 h-5 text-blue-400" />
+                <div>
+                  <h3 className="text-sm font-bold text-white">Telegram Bot & Uzaktan Kontrol</h3>
+                  <span className="text-[10px] text-gray-400">Telegram'dan görev, harcama, not ekleyin ve bildirim alın</span>
+                </div>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={telegramEnabled}
+                  onChange={(e) => setTelegramEnabled(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-10 h-5 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+              </label>
+            </div>
+
+            {telegramEnabled && (
+              <div className="space-y-3 pt-2 border-t border-white/5 animate-in fade-in">
+                <div>
+                  <label className="text-xs font-semibold text-gray-300 block mb-1">Telegram Bot Token</label>
+                  <input
+                    type="password"
+                    placeholder="Örn: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                    value={telegramToken}
+                    onChange={(e) => setTelegramToken(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-white placeholder-gray-500 font-mono focus:outline-none focus:border-blue-500/50"
+                  />
+                  <span className="text-[10px] text-gray-500 mt-1 block">
+                    @BotFather üzerinden ücretsiz oluşturduğunuz HTTP API token'ı.
+                  </span>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-gray-300 block mb-1">Telegram Chat ID</label>
+                  <input
+                    type="text"
+                    placeholder="Örn: 987654321"
+                    value={telegramChatId}
+                    onChange={(e) => setTelegramChatId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-white placeholder-gray-500 font-mono focus:outline-none focus:border-blue-500/50"
+                  />
+                  <span className="text-[10px] text-gray-500 mt-1 block">
+                    @userinfobot üzerinden öğrenebileceğiniz kullanıcı veya grup ID'niz.
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleTestTelegram}
+                  disabled={telegramTestStatus === 'testing' || !telegramToken}
+                  className="w-full py-2 px-3 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                >
+                  <MessageSquare className={`w-3.5 h-3.5 ${telegramTestStatus === 'testing' ? 'animate-spin' : ''}`} />
+                  <span>{telegramTestStatus === 'testing' ? 'Test Mesajı Gönderiliyor...' : 'Telegram Bağlantısını Test Et'}</span>
+                </button>
+
+                {telegramTestMsg && (
+                  <div className={`p-2.5 rounded-xl text-xs ${
+                    telegramTestStatus === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                  }`}>
+                    {telegramTestMsg}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Section 4: Refresh Interval */}

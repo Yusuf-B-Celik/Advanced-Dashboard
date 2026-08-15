@@ -38,6 +38,7 @@ export const INITIAL_WIDGETS: WidgetConfig[] = [
   { id: 'journal-widget', type: 'journal', title: 'Günün Mood & Günlüğü', icon: 'BookOpen', colSpan: 3, rowSpan: 1, visible: true, category: 'productivity', workspaces: ['all', 'odaklanma'] },
   { id: 'clipboard-widget', type: 'clipboard', title: 'Hızlı Taslak & Metin Araçları', icon: 'Clipboard', colSpan: 3, rowSpan: 1, visible: true, category: 'utilities', workspaces: ['all', 'genel'] },
   { id: 'network-widget', type: 'network', title: 'Ağ & İnternet Teşhis', icon: 'Wifi', colSpan: 3, rowSpan: 1, visible: true, category: 'system', workspaces: ['all', 'sistem'] },
+  { id: 'websummarizer-widget', type: 'websummarizer', title: 'AI Web & Video Özetleyici', icon: 'Globe', colSpan: 4, rowSpan: 2, visible: true, category: 'ai', workspaces: ['all', 'genel', 'haberler'] },
 ];
 
 interface DashboardContextType {
@@ -112,16 +113,18 @@ interface DashboardContextType {
   setWidgetColSpan: (id: string, span: number) => void;
   moveWidget: (fromIndex: number, toIndex: number) => void;
   resetLayout: () => void;
+  applyPreset: (preset: 'all' | 'dev' | 'finance' | 'focus' | 'news') => void;
   isLayoutLocked: boolean;
   setIsLayoutLocked: (locked: boolean) => void;
+  weatherCity: string;
 }
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
 
 export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
-    // 1. Try loading from dashboard_widgets_v3
-    const saved = localStorage.getItem('dashboard_widgets_v3') || localStorage.getItem('dashboard_widgets_v2');
+    // 1. Try loading from dashboard_widgets_v4
+    const saved = localStorage.getItem('dashboard_widgets_v4') || localStorage.getItem('dashboard_widgets_v3') || localStorage.getItem('dashboard_widgets_v2');
     if (saved) {
       try {
         const parsed: WidgetConfig[] = JSON.parse(saved);
@@ -131,9 +134,9 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const missing = INITIAL_WIDGETS.filter(w => !existingIds.has(w.id));
           
           if (missing.length > 0) {
-            // Automatically merge missing widgets so user immediately gets all 25 widgets
+            // Automatically merge missing widgets so user immediately gets all widgets
             const merged = [...parsed, ...missing];
-            localStorage.setItem('dashboard_widgets_v3', JSON.stringify(merged));
+            localStorage.setItem('dashboard_widgets_v4', JSON.stringify(merged));
             return merged;
           }
           return parsed;
@@ -143,7 +146,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     }
     
-    localStorage.setItem('dashboard_widgets_v3', JSON.stringify(INITIAL_WIDGETS));
+    localStorage.setItem('dashboard_widgets_v4', JSON.stringify(INITIAL_WIDGETS));
     return INITIAL_WIDGETS;
   });
 
@@ -515,6 +518,43 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setWidgets(INITIAL_WIDGETS);
     localStorage.removeItem('dashboard_widgets_v2');
     localStorage.removeItem('dashboard_widgets_v3');
+    localStorage.removeItem('dashboard_widgets_v4');
+  };
+
+  const applyPreset = (preset: 'all' | 'dev' | 'finance' | 'focus' | 'news') => {
+    if (preset === 'all') {
+      setActiveWorkspace('all');
+      setWidgets(prev => prev.map(w => ({ ...w, visible: true })));
+      return;
+    }
+
+    if (preset === 'dev') {
+      setActiveWorkspace('sistem');
+      const devIds = new Set(['system-widget', 'uptime-widget', 'snippets-widget', 'github-widget', 'hackernews-widget', 'network-widget', 'quick-tools-widget', 'ai-widget']);
+      setWidgets(prev => prev.map(w => ({ ...w, visible: devIds.has(w.id) })));
+      return;
+    }
+
+    if (preset === 'finance') {
+      setActiveWorkspace('haberler');
+      const finIds = new Set(['finance-widget', 'cryptoheatmap-widget', 'expenses-widget', 'news-widget', 'worldclock-widget', 'quick-tools-widget', 'ai-widget']);
+      setWidgets(prev => prev.map(w => ({ ...w, visible: finIds.has(w.id) })));
+      return;
+    }
+
+    if (preset === 'focus') {
+      setActiveWorkspace('odaklanma');
+      const focusIds = new Set(['pomodoro-widget', 'radio-widget', 'kanban-widget', 'breathe-widget', 'journal-widget', 'notes-widget', 'habit-widget']);
+      setWidgets(prev => prev.map(w => ({ ...w, visible: focusIds.has(w.id) })));
+      return;
+    }
+
+    if (preset === 'news') {
+      setActiveWorkspace('haberler');
+      const newsIds = new Set(['news-widget', 'websummarizer-widget', 'ai-widget', 'quote-widget', 'weather-widget', 'finance-widget']);
+      setWidgets(prev => prev.map(w => ({ ...w, visible: newsIds.has(w.id) })));
+      return;
+    }
   };
 
   const toggleViewMode = () => {
@@ -574,8 +614,10 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setWidgetColSpan,
       moveWidget,
       resetLayout,
+      applyPreset,
       isLayoutLocked,
-      setIsLayoutLocked
+      setIsLayoutLocked,
+      weatherCity: settings.weatherCity || 'İstanbul'
     }}>
       {children}
     </DashboardContext.Provider>

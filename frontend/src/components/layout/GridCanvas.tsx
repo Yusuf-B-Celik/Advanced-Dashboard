@@ -26,6 +26,7 @@ import { BreatheRelaxWidget } from '../widgets/BreatheRelaxWidget';
 import { DailyJournalWidget } from '../widgets/DailyJournalWidget';
 import { ClipboardHistoryWidget } from '../widgets/ClipboardHistoryWidget';
 import { NetworkSpeedWidget } from '../widgets/NetworkSpeedWidget';
+import { WebSummarizerWidget } from '../widgets/WebSummarizerWidget';
 import { ExpandedWidgetModal } from './ExpandedWidgetModal';
 import { Plus, Layers } from 'lucide-react';
 
@@ -110,6 +111,8 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({ onOpenWidgetGallery }) =
         return <ClipboardHistoryWidget />;
       case 'network':
         return <NetworkSpeedWidget />;
+      case 'websummarizer':
+        return <WebSummarizerWidget />;
       default:
         return <div className="text-gray-400 text-xs">Widget yükleniyor...</div>;
     }
