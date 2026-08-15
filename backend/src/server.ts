@@ -9,6 +9,7 @@ import { systemService } from './services/systemService';
 import { storageService } from './services/storageService';
 import { hackerNewsService } from './services/hackerNewsService';
 import { uptimeService } from './services/uptimeService';
+import { tunnelService } from './services/tunnelService';
 
 dotenv.config();
 
@@ -281,6 +282,39 @@ app.get('/api/network/info', async (_req: Request, res: Response) => {
     });
   } catch (err: any) {
     res.json({ success: true, publicIp: '127.0.0.1', online: true });
+  }
+});
+
+// --- NGROK MOBILE TUNNEL ROUTES ---
+app.get('/api/tunnel/status', async (_req: Request, res: Response) => {
+  try {
+    const status = await tunnelService.getStatus();
+    res.json({ success: true, ...status });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/tunnel/start', async (req: Request, res: Response) => {
+  try {
+    const port = parseInt(req.body.port as string) || 5173;
+    const result = await tunnelService.startTunnel(port);
+    if (result.success) {
+      res.json({ success: true, url: result.url, qrUrl: result.qrUrl });
+    } else {
+      res.status(400).json({ success: false, error: result.error });
+    }
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/tunnel/stop', async (_req: Request, res: Response) => {
+  try {
+    await tunnelService.stopTunnel();
+    res.json({ success: true, message: 'Tünel sonlandırıldı.' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

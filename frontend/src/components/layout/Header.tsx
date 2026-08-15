@@ -17,7 +17,8 @@ import {
   CheckSquare, 
   Radio,
   LayoutGrid,
-  Maximize2
+  Maximize2,
+  Smartphone
 } from 'lucide-react';
 import { useDashboard } from '../../contexts/DashboardContext';
 
@@ -25,12 +26,14 @@ interface HeaderProps {
   onOpenWidgetGallery: () => void;
   onOpenSettings: () => void;
   onOpenAIAssistant: () => void;
+  onOpenMobileTunnel: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenWidgetGallery,
   onOpenSettings,
   onOpenAIAssistant,
+  onOpenMobileTunnel,
 }) => {
   const { 
     activeWorkspace, 
@@ -240,6 +243,16 @@ export const Header: React.FC<HeaderProps> = ({
             title="Tam Ekran"
           >
             {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
+
+          {/* Mobile Ngrok Broadcast Button */}
+          <button
+            onClick={onOpenMobileTunnel}
+            className="px-2.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition flex items-center gap-1.5"
+            title="Mobilden Kullan (Ngrok Yayını)"
+          >
+            <Smartphone className="w-4 h-4" />
+            <span className="hidden xl:inline text-xs font-bold">Mobil Yayın</span>
           </button>
 
           {/* Settings Button */}
