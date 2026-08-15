@@ -21,20 +21,20 @@ export class TTSService {
     const tts = new MsEdgeTTS();
     await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-    const { audioStream } = tts.toStream(cleanedText, {
+    const stream = tts.toStream(cleanedText, {
       rate: options.rate || 'default',
       pitch: options.pitch || 'default'
     });
 
     return new Promise<Buffer>((resolve, reject) => {
       const chunks: Buffer[] = [];
-      let isResolved = false;
+      let settled = false;
 
-      const finishSuccess = () => {
-        if (!isResolved) {
-          isResolved = true;
+      const finish = () => {
+        if (!settled) {
+          settled = true;
           const totalBuffer = Buffer.concat(chunks);
-          if (totalBuffer.length > 1000) {
+          if (totalBuffer.length > 500) {
             resolve(totalBuffer);
           } else {
             reject(new Error('Ses verisi yetersiz.'));
@@ -44,31 +44,30 @@ export class TTSService {
 
       const timer = setTimeout(() => {
         if (chunks.length > 0) {
-          finishSuccess();
-        } else if (!isResolved) {
-          isResolved = true;
+          finish();
+        } else if (!settled) {
+          settled = true;
           reject(new Error('TTS Zaman Aşımı'));
         }
-      }, 8000);
+      }, 10000);
 
-      audioStream.on('data', (chunk: Buffer) => {
+      stream.audioStream.on('data', (chunk: Buffer) => {
         chunks.push(chunk);
       });
 
-      audioStream.on('end', () => {
+      stream.audioStream.on('end', () => {
         clearTimeout(timer);
-        finishSuccess();
+        finish();
       });
 
-      audioStream.on('error', (err: any) => {
-        // If Microsoft closed the socket after sending data, don't fail if we have the audio!
+      stream.audioStream.on('error', (_err: any) => {
+        clearTimeout(timer);
+        // If Microsoft closed the socket after transmitting audio frames, treat collected audio as success
         if (chunks.length > 0) {
-          clearTimeout(timer);
-          finishSuccess();
-        } else if (!isResolved) {
-          clearTimeout(timer);
-          isResolved = true;
-          reject(err);
+          finish();
+        } else if (!settled) {
+          settled = true;
+          reject(_err);
         }
       });
     });
