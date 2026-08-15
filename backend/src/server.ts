@@ -452,33 +452,33 @@ app.post('/api/ai/briefing', async (req: Request, res: Response) => {
 
     const dateStr = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-    const prompt = `Sen üst düzey bir CEO, devlet başkanı veya vizyoner bir teknoloji liderinin Özel Baş Danışmanısın.
-Kullanıcı Adı: ${userName}
+    const prompt = `Kullanıcı: ${userName}
 Tarih: ${dateStr}
-Şehir / Lokasyon: ${weatherCity}
+Şehir: ${weatherCity}
 
-GERÇEK ZAMANLI VERİLER:
-- PİYASALAR: Dolar: ${usd} TL | Euro: ${eur} TL | Gram Altın: ${gold} TL | Bitcoin: $${btc.toLocaleString()}
-- PANODAKİ BEKLEYEN GÖREVLER: ${pendingTasks || 'Bugün acil bekleyen görev bulunmuyor'}
-- TÜRKiYE & DÜNYA SON DAKİKA HABERLERİ:
+GÜNCEL BİLGİLER:
+- Piyasalar: Dolar: ${usd} TL | Euro: ${eur} TL | Gram Altın: ${gold} TL | Bitcoin: $${btc.toLocaleString()}
+- Bekleyen Görevler: ${pendingTasks || 'Bugün bekleyen kritik görev yok'}
+- Son Haberler:
 ${topNewsSummaries}
 
 GÖREV:
-${userName} için son derece akıcı, profesyonel, bilge, ilham verici ve gerçek bilgileri ustalıkla sentezleyen bir "GÜNLÜK YÖNETİCİ BRİFİNGİ" hazırla.
+${userName} için kısa, net, sadece MADDE MADDE özet bilgiler içeren bir Günlük Yönetici Brifingi hazırla.
 
-BİÇİM VE KURALLAR:
-1. Hitap: Karizmatik, saygılı ve samimi bir açılış ("Günaydın ${userName}..." veya "İyi günler ${userName}...").
-2. Bölümler (Akıcı Markdown formatında):
-   - 🌟 **Günün Vizyonu & Enerjisi**: Tarih ve ${weatherCity} atmosferiyle güne motive edici bir başlangıç.
-   - 📊 **Makro Finans & Piyasa Nabzı**: Dolar (${usd} TL), Altın (${gold} TL) ve Kripto ($${btc}) hareketlerinin özet stratejik yorumu.
-   - 📰 **Kritik Gündem & Stratejik Çıkarımlar**: Yukarıda verilen gerçek haberlerden en önemli 2-3 olayın neden önemli olduğunu açıklayan net analiz.
-   - 🎯 **Günün Odak & Aksiyon Planı**: Panodaki görevler ışığında (${pendingTasks}) günü maksimum verimle geçirmek için odak önerisi.
-   - 💎 **Günün İlhamı**: Güçlü bir Stoacı veya liderlik felsefesi aforizması.
-3. Seslendirme Uyumluluğu: Cümleler konuşma dilinde doğal ve akıcı telaffuz edilebilir olsun.`;
+BİÇİM (Yalnızca aşağıdaki maddeleri doldur, uzun dolgu paragraflar veya edebi laflar ASLA yazma):
+
+- ☀️ **Hava & Lokasyon**: ${weatherCity} için kısa durum.
+- 📈 **Piyasa Özeti**: Dolar: ${usd} TL, Euro: ${eur} TL, Altın: ${gold} TL, BTC: $${btc.toLocaleString()} (Tek cümlelik net piyasa yorumu).
+- 📰 **Kritik Gündem Başlıkları**:
+  - En önemli haber 1 (Kısa 1 cümle)
+  - En önemli haber 2 (Kısa 1 cümle)
+  - En önemli haber 3 (Kısa 1 cümle)
+- 🎯 **Bekleyen Görevler**: ${pendingTasks}
+- 💡 **Günün Notu**: 1 kısa cümlelik odak veya motivasyon tavsiyesi.`;
 
     const briefing = await minimaxService.createChatCompletion(
       [
-        { role: 'system', content: 'Sen dünyanın en iyi yönetici brifingi hazırlayan strateji ve istihbarat danışmanısın. Yanıtların her zaman derinlikli, edebi, akıcı ve bilgilendiricidir.' },
+        { role: 'system', content: 'Sen üst düzey yöneticilere sadece net, madde madde, kısa ve öz özet bilgi veren bir asistansın. Asla uzun cümleler veya gereksiz dolgu paragraflar yazmazsın.' },
         { role: 'user', content: prompt }
       ],
       { apiKey, model, planType, apiProtocol }
