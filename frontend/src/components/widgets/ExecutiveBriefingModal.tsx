@@ -15,7 +15,9 @@ import {
   Headphones,
   FastForward,
   Copy,
-  Check
+  Check,
+  UserCheck,
+  Mic2
 } from 'lucide-react';
 import { useDashboard } from '../../contexts/DashboardContext';
 import { MarkdownViewer } from '../common/MarkdownViewer';
@@ -30,16 +32,21 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({ 
   const [briefing, setBriefing] = useState<string | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [ttsLoading, setTtsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [speechRate, setSpeechRate] = useState<number>(1.0);
+  const [selectedVoice, setSelectedVoice] = useState<'tr-TR-AhmetNeural' | 'tr-TR-EmelNeural'>('tr-TR-AhmetNeural');
   const [copied, setCopied] = useState(false);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const fetchBriefing = async () => {
     try {
       setLoading(true);
       stopAudio();
+      setAudioUrl(null);
+
       const res = await fetch('/api/ai/briefing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,7 +55,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({ 
           model: settings.minimaxModel,
           planType: settings.minimaxPlanType,
           apiProtocol: settings.minimaxProtocol,
-          userName: settings.userName || 'Değerli Kullanıcı',
+          userName: settings.userName || 'Yusuf Bey',
           weatherCity: weatherCity || 'İstanbul'
         })
       });
@@ -75,64 +82,69 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({ 
   }, [isOpen]);
 
   const stopAudio = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
     setIsPlaying(false);
-    setIsPaused(false);
   };
 
-  const handlePlayAudio = () => {
-    if (!briefing || !('speechSynthesis' in window)) return;
+  // High quality Neural Voice Synthesis from Backend
+  const handlePlayNeuralAudio = async () => {
+    if (!briefing) return;
 
-    if (isPaused) {
-      window.speechSynthesis.resume();
-      setIsPlaying(true);
-      setIsPaused(false);
+    if (audioRef.current && audioUrl) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.playbackRate = speechRate;
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
       return;
     }
 
-    stopAudio();
+    try {
+      setTtsLoading(true);
+      const res = await fetch('/api/ai/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: briefing,
+          voice: selectedVoice,
+          rate: speechRate === 1.25 ? '+25%' : speechRate === 1.5 ? '+50%' : 'default'
+        })
+      });
 
-    // Clean markdown symbols for natural TTS reading
-    const cleanText = briefing
-      .replace(/[#*`_~>\-]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+      if (!res.ok) throw new Error('Ses üretilemedi.');
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'tr-TR';
-    utterance.rate = speechRate;
-    utterance.pitch = 1.0;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setAudioUrl(url);
 
-    // Pick Turkish voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const trVoice = voices.find(v => v.lang.includes('tr') || v.name.includes('Turkish') || v.name.includes('Yelda') || v.name.includes('Tolga') || v.name.includes('Emel'));
-    if (trVoice) {
-      utterance.voice = trVoice;
-    }
+      const audio = new Audio(url);
+      audio.playbackRate = speechRate;
+      audio.onended = () => setIsPlaying(false);
+      audio.onerror = () => setIsPlaying(false);
+      audioRef.current = audio;
 
-    utterance.onend = () => {
-      setIsPlaying(false);
-      setIsPaused(false);
-    };
-
-    utterance.onerror = () => {
-      setIsPlaying(false);
-      setIsPaused(false);
-    };
-
-    utteranceRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-    setIsPlaying(true);
-    setIsPaused(false);
-  };
-
-  const handlePauseAudio = () => {
-    if ('speechSynthesis' in window && isPlaying) {
-      window.speechSynthesis.pause();
-      setIsPlaying(false);
-      setIsPaused(true);
+      audio.play();
+      setIsPlaying(true);
+    } catch (err: any) {
+      console.warn('Neural TTS failed, falling back to Web Speech API:', err.message);
+      // Fallback to browser TTS if network is unavailable
+      if ('speechSynthesis' in window) {
+        const clean = briefing.replace(/[#*`_~>\-]/g, ' ');
+        const utter = new SpeechSynthesisUtterance(clean);
+        utter.lang = 'tr-TR';
+        utter.rate = speechRate;
+        utter.onend = () => setIsPlaying(false);
+        window.speechSynthesis.speak(utter);
+        setIsPlaying(true);
+      }
+    } finally {
+      setTtsLoading(false);
     }
   };
 
@@ -147,19 +159,23 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({ 
   const toggleRate = () => {
     const nextRate = speechRate === 1.0 ? 1.25 : speechRate === 1.25 ? 1.5 : 1.0;
     setSpeechRate(nextRate);
-    if (isPlaying) {
-      // Re-trigger with new rate
-      stopAudio();
-      setTimeout(handlePlayAudio, 100);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = nextRate;
     }
+  };
+
+  const handleVoiceChange = (voice: 'tr-TR-AhmetNeural' | 'tr-TR-EmelNeural') => {
+    setSelectedVoice(voice);
+    stopAudio();
+    setAudioUrl(null); // Force re-synthesis with new voice
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-xl animate-in fade-in">
-      <div className="w-full max-w-2xl glass-panel rounded-3xl flex flex-col overflow-hidden border border-cyan-500/30 shadow-2xl animate-in zoom-in-95 max-h-[88vh]">
-        {/* Header */}
+      <div className="w-full max-w-3xl glass-panel rounded-3xl flex flex-col overflow-hidden border border-cyan-500/30 shadow-2xl animate-in zoom-in-95 max-h-[90vh]">
+        {/* Modal Top Header */}
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-black/40">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-lg shadow-cyan-500/20">
@@ -168,10 +184,10 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({ 
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-black text-white tracking-wide">
-                  Günlük Yönetici Brifingi
+                  Günün Yönetici Brifingi (Executive Intelligence)
                 </h2>
                 <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  {generatedAt ? `${generatedAt} Canlı` : 'AI Sentez'}
+                  {generatedAt ? `${generatedAt} Sentez` : 'Canlı AI'}
                 </span>
               </div>
               <span className="text-xs text-gray-400">
@@ -201,35 +217,60 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({ 
           </div>
         </div>
 
-        {/* Audio Visualizer & Player Control Strip */}
-        <div className="px-5 py-3 bg-black/60 border-b border-white/5 flex items-center justify-between gap-4">
+        {/* Studio Neural TTS Player Control Bar */}
+        <div className="px-5 py-3.5 bg-black/70 border-b border-white/10 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            {isPlaying ? (
-              <button
-                onClick={handlePauseAudio}
-                className="p-3 rounded-2xl bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/30 hover:scale-105 active:scale-95 transition"
-                title="Duraklat"
-              >
-                <Pause className="w-5 h-5 fill-current" />
-              </button>
-            ) : (
-              <button
-                onClick={handlePlayAudio}
-                disabled={loading || !briefing}
-                className="p-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold shadow-lg shadow-cyan-500/30 hover:scale-105 active:scale-95 transition disabled:opacity-50"
-                title="Brifingi Sesli Dinle"
-              >
-                <Play className="w-5 h-5 fill-current ml-0.5" />
-              </button>
-            )}
+            <button
+              onClick={handlePlayNeuralAudio}
+              disabled={loading || !briefing || ttsLoading}
+              className={`p-3.5 rounded-2xl font-black text-xs flex items-center gap-2 shadow-lg transition disabled:opacity-50 ${
+                isPlaying 
+                  ? 'bg-amber-500 text-black shadow-amber-500/30 hover:scale-105' 
+                  : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black shadow-cyan-500/30 hover:scale-105'
+              }`}
+            >
+              {ttsLoading ? (
+                <>
+                  <RotateCw className="w-4 h-4 animate-spin" />
+                  <span>Stüdyo Sesi Hazırlanıyor...</span>
+                </>
+              ) : isPlaying ? (
+                <>
+                  <Pause className="w-4 h-4 fill-current" />
+                  <span>Duraklat</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Stüdyo Seslendirmesi Dinle</span>
+                </>
+              )}
+            </button>
 
-            <div>
-              <span className="text-xs font-bold text-white block">
-                {isPlaying ? 'Brifing Seslendiriliyor...' : isPaused ? 'Duraklatıldı' : 'Sesli Dinleyin (Türkçe TTS)'}
-              </span>
-              <span className="text-[10px] text-gray-400">
-                {isPlaying ? 'Doğal Türkçe ses sentezi aktif' : 'Dinlemek için oynat butonuna basın'}
-              </span>
+            {/* Voice Model Selector (Ahmet vs Emel) */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10 text-xs">
+              <button
+                onClick={() => handleVoiceChange('tr-TR-AhmetNeural')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition ${
+                  selectedVoice === 'tr-TR-AhmetNeural'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+                title="Ahmet - Tok & Karizmatik Yönetici Sesi"
+              >
+                🎙️ Ahmet (Tok Erkek)
+              </button>
+              <button
+                onClick={() => handleVoiceChange('tr-TR-EmelNeural')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition ${
+                  selectedVoice === 'tr-TR-EmelNeural'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+                title="Emel - Akıcı & Berrak Haber Spikeri Sesi"
+              >
+                🎙️ Emel (Akıcı Kadın)
+              </button>
             </div>
           </div>
 
@@ -247,8 +288,8 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({ 
 
             <button
               onClick={toggleRate}
-              className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold text-cyan-300 transition"
-              title="Okuma Hızını Değiştir"
+              className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-cyan-300 transition"
+              title="Okuma Hızı"
             >
               {speechRate}x
             </button>
@@ -264,13 +305,13 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({ 
         </div>
 
         {/* Briefing Text Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4 bg-black/30">
           {loading ? (
-            <div className="py-16 flex flex-col items-center justify-center space-y-3">
-              <RotateCw className="w-8 h-8 text-cyan-400 animate-spin" />
+            <div className="py-20 flex flex-col items-center justify-center space-y-3">
+              <RotateCw className="w-9 h-9 text-cyan-400 animate-spin" />
               <div className="text-center">
                 <span className="text-sm font-bold text-white block">Günün Yönetici Brifingi Hazırlanıyor...</span>
-                <span className="text-xs text-gray-400">Piyasa, haberler, görevler ve hava durumu MiniMax ile sentezleniyor</span>
+                <span className="text-xs text-gray-400">Piyasalar, haberler, görevler ve hava durumu MiniMax-M3 ile analiz ediliyor</span>
               </div>
             </div>
           ) : briefing ? (

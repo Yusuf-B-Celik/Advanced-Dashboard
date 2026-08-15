@@ -12,6 +12,7 @@ import { uptimeService } from './services/uptimeService';
 import { tunnelService } from './services/tunnelService';
 import { scraperService } from './services/scraperService';
 import { telegramBotService } from './services/telegramBotService';
+import { ttsService } from './services/ttsService';
 
 dotenv.config();
 
@@ -408,10 +409,31 @@ app.post('/api/telegram/test', async (req: Request, res: Response) => {
   }
 });
 
-// --- EXECUTIVE DAILY BRIEFING ROUTE ---
+// --- NEURAL TURKISH TTS ROUTE (Microsoft Neural Voices) ---
+app.post('/api/ai/tts', async (req: Request, res: Response) => {
+  try {
+    const { text, voice = 'tr-TR-AhmetNeural', rate = 'default' } = req.body;
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ success: false, error: 'Metin gereklidir.' });
+    }
+
+    const audioBuffer = await ttsService.getSpeechBuffer(text, { voice, rate });
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': audioBuffer.length.toString(),
+      'Cache-Control': 'no-cache'
+    });
+    res.send(audioBuffer);
+  } catch (err: any) {
+    console.error('[TTS Error]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- EXECUTIVE DAILY BRIEFING ROUTE (High-Intelligence Digest) ---
 app.post('/api/ai/briefing', async (req: Request, res: Response) => {
   try {
-    const { apiKey, model, planType, apiProtocol, userName = 'Kullanıcı', weatherCity = 'İstanbul' } = req.body;
+    const { apiKey, model, planType, apiProtocol, userName = 'Yusuf Bey', weatherCity = 'İstanbul' } = req.body;
 
     const [finance, news] = await Promise.all([
       financeService.getFinanceData().catch(() => []),
@@ -419,27 +441,44 @@ app.post('/api/ai/briefing', async (req: Request, res: Response) => {
     ]);
     const data = storageService.getData();
 
-    const usd = finance.find((f: any) => f.code === 'USDTRY')?.sell || 36.8;
+    const usd = finance.find((f: any) => f.code === 'USDTRY')?.sell || 36.85;
+    const eur = finance.find((f: any) => f.code === 'EURTRY')?.sell || 38.45;
     const gold = finance.find((f: any) => f.code === 'GA')?.sell || 3470;
     const btc = finance.find((f: any) => f.code === 'BTC')?.sell || 96000;
-    const topNews = news.slice(0, 3).map((n: any) => n.title).join(' | ');
-    const pendingTasks = (data.tasks || []).filter((t: any) => t.status !== 'done').map((t: any) => t.title).slice(0, 4).join(', ');
+    
+    // Top 5 news items
+    const topNewsSummaries = news.slice(0, 5).map((n: any, idx: number) => `${idx + 1}. [${n.source}] ${n.title} (${n.snippet || ''})`).join('\n');
+    const pendingTasks = (data.tasks || []).filter((t: any) => t.status !== 'done').map((t: any) => t.title).slice(0, 5).join(', ');
 
-    const prompt = `Sayın ${userName} için bugün (${new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}) güne başlama ve Yönetici Brifingi hazırla.
-Bilgiler:
-- Şehir: ${weatherCity}
-- Piyasa: Dolar ${usd}₺, Gram Altın ${gold}₺, Bitcoin $${btc}.
-- Bekleyen Görevler: ${pendingTasks || 'Bugün bekleyen kritik görev yok'}
-- Son Dakika Haber Başlıkları: ${topNews}
+    const dateStr = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-Kurallar:
-1. Hitap samimi, motive edici, vizyoner ve profesyonel olsun.
-2. 3 kısa ve akıcı paragraf yaz (TTS sesli okuma için cümleler doğal ve temiz olsun, özel işaret veya karmaşık semboller koyma).
-3. Günün ilham veren bir tavsiyesi veya özlü sözüyle bitir.`;
+    const prompt = `Sen üst düzey bir CEO, devlet başkanı veya vizyoner bir teknoloji liderinin Özel Baş Danışmanısın.
+Kullanıcı Adı: ${userName}
+Tarih: ${dateStr}
+Şehir / Lokasyon: ${weatherCity}
+
+GERÇEK ZAMANLI VERİLER:
+- PİYASALAR: Dolar: ${usd} TL | Euro: ${eur} TL | Gram Altın: ${gold} TL | Bitcoin: $${btc.toLocaleString()}
+- PANODAKİ BEKLEYEN GÖREVLER: ${pendingTasks || 'Bugün acil bekleyen görev bulunmuyor'}
+- TÜRKiYE & DÜNYA SON DAKİKA HABERLERİ:
+${topNewsSummaries}
+
+GÖREV:
+${userName} için son derece akıcı, profesyonel, bilge, ilham verici ve gerçek bilgileri ustalıkla sentezleyen bir "GÜNLÜK YÖNETİCİ BRİFİNGİ" hazırla.
+
+BİÇİM VE KURALLAR:
+1. Hitap: Karizmatik, saygılı ve samimi bir açılış ("Günaydın ${userName}..." veya "İyi günler ${userName}...").
+2. Bölümler (Akıcı Markdown formatında):
+   - 🌟 **Günün Vizyonu & Enerjisi**: Tarih ve ${weatherCity} atmosferiyle güne motive edici bir başlangıç.
+   - 📊 **Makro Finans & Piyasa Nabzı**: Dolar (${usd} TL), Altın (${gold} TL) ve Kripto ($${btc}) hareketlerinin özet stratejik yorumu.
+   - 📰 **Kritik Gündem & Stratejik Çıkarımlar**: Yukarıda verilen gerçek haberlerden en önemli 2-3 olayın neden önemli olduğunu açıklayan net analiz.
+   - 🎯 **Günün Odak & Aksiyon Planı**: Panodaki görevler ışığında (${pendingTasks}) günü maksimum verimle geçirmek için odak önerisi.
+   - 💎 **Günün İlhamı**: Güçlü bir Stoacı veya liderlik felsefesi aforizması.
+3. Seslendirme Uyumluluğu: Cümleler konuşma dilinde doğal ve akıcı telaffuz edilebilir olsun.`;
 
     const briefing = await minimaxService.createChatCompletion(
       [
-        { role: 'system', content: 'Sen üst düzey yöneticilere sesli ve yazılı günlük brifing sunan vizyoner bir yapay zeka danışmanısın.' },
+        { role: 'system', content: 'Sen dünyanın en iyi yönetici brifingi hazırlayan strateji ve istihbarat danışmanısın. Yanıtların her zaman derinlikli, edebi, akıcı ve bilgilendiricidir.' },
         { role: 'user', content: prompt }
       ],
       { apiKey, model, planType, apiProtocol }
