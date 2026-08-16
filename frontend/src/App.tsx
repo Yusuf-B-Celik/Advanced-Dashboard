@@ -6,6 +6,7 @@ import { WidgetGalleryModal } from './components/layout/WidgetGalleryModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { MobileTunnelModal } from './components/common/MobileTunnelModal';
 import { ExecutiveBriefingModal } from './components/widgets/ExecutiveBriefingModal';
+import { CommandPaletteModal } from './components/common/CommandPaletteModal';
 import { Bot, Sparkles, X } from 'lucide-react';
 import { AIAssistantWidget } from './components/widgets/AIAssistantWidget';
 
@@ -15,6 +16,19 @@ const DashboardMain: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileTunnelOpen, setMobileTunnelOpen] = useState(false);
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  // Global Ctrl + K / Cmd + K listener
+  React.useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   const getWallpaperClass = () => {
     switch (settings.wallpaper) {
@@ -38,6 +52,7 @@ const DashboardMain: React.FC = () => {
         onOpenAIAssistant={toggleAIPanel}
         onOpenMobileTunnel={() => setMobileTunnelOpen(true)}
         onOpenExecutiveBriefing={() => setBriefingOpen(true)}
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
       />
 
       {/* Main Workspace Layout with Smooth Push Grid */}
@@ -123,6 +138,15 @@ const DashboardMain: React.FC = () => {
       <ExecutiveBriefingModal
         isOpen={briefingOpen}
         onClose={() => setBriefingOpen(false)}
+      />
+
+      <CommandPaletteModal
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onOpenWidgetGallery={() => { setGalleryOpen(true); setCommandPaletteOpen(false); }}
+        onOpenExecutiveBriefing={() => { setBriefingOpen(true); setCommandPaletteOpen(false); }}
+        onOpenMobileTunnel={() => { setMobileTunnelOpen(true); setCommandPaletteOpen(false); }}
+        onOpenSettings={() => { setSettingsOpen(true); setCommandPaletteOpen(false); }}
       />
     </div>
   );

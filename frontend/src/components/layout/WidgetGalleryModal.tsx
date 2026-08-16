@@ -28,7 +28,10 @@ import {
   BookOpen,
   Clipboard,
   Wifi,
-  Sparkles
+  Sparkles,
+  Compass,
+  Network,
+  Workflow
 } from 'lucide-react';
 import { useDashboard } from '../../contexts/DashboardContext';
 
@@ -69,6 +72,9 @@ export const WidgetGalleryModal: React.FC<WidgetGalleryModalProps> = ({ isOpen, 
       case 'BookOpen': return BookOpen;
       case 'Clipboard': return Clipboard;
       case 'Wifi': return Wifi;
+      case 'Compass': return Compass;
+      case 'Network': return Network;
+      case 'Workflow': return Workflow;
       default: return Sparkles;
     }
   };

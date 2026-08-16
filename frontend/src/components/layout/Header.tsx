@@ -32,6 +32,7 @@ interface HeaderProps {
   onOpenAIAssistant: () => void;
   onOpenMobileTunnel: () => void;
   onOpenExecutiveBriefing: () => void;
+  onOpenCommandPalette: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAIAssistant,
   onOpenMobileTunnel,
   onOpenExecutiveBriefing,
+  onOpenCommandPalette,
 }) => {
   const { 
     activeWorkspace, 
@@ -236,6 +238,18 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
           </div>
+
+          {/* Command Palette Button (Ctrl+K) */}
+          <button
+            onClick={onOpenCommandPalette}
+            className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/20 text-gray-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/40 text-xs font-semibold flex items-center gap-1.5 transition"
+            title="Spotlight Komut Paleti (Ctrl + K)"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <kbd className="px-1.5 py-0.5 rounded bg-black/40 text-[10px] font-mono text-cyan-300 border border-white/10 hidden sm:inline">
+              ⌘K
+            </kbd>
+          </button>
 
           {/* Primary Action: + Widget Ekle */}
           <button

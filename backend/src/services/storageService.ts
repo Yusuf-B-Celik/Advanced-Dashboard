@@ -14,6 +14,7 @@ export interface DashboardData {
     userName?: string;
     telegram?: any;
   };
+  automations?: any[];
   tasks: Array<{
     id: string;
     title: string;

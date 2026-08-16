@@ -94,6 +94,7 @@ export interface NoteItem {
   content: string;
   updatedAt: string;
   category?: string;
+  tags?: string[];
 }
 
 export interface BookmarkItem {

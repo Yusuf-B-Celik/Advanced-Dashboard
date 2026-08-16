@@ -13,6 +13,8 @@ import { tunnelService } from './services/tunnelService';
 import { scraperService } from './services/scraperService';
 import { telegramBotService } from './services/telegramBotService';
 import { ttsService } from './services/ttsService';
+import { deepResearchService } from './services/deepResearchService';
+import { automationService } from './services/automationService';
 
 dotenv.config();
 
@@ -372,6 +374,29 @@ mindmap
   }
 });
 
+// --- DEEP RESEARCH AGENT ROUTE ---
+app.post('/api/ai/deep-research', async (req: Request, res: Response) => {
+  try {
+    const { query, apiKey, model, planType, apiProtocol } = req.body;
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ success: false, error: 'Araştırma sorgusu gereklidir.' });
+    }
+
+    const savedSettings = storageService.getData().settings as any;
+    const config = {
+      apiKey: apiKey || savedSettings.minimaxApiKey,
+      model: model || savedSettings.minimaxModel || 'MiniMax-M3',
+      planType: planType || savedSettings.minimaxPlanType || 'token_plan',
+      apiProtocol: apiProtocol || savedSettings.minimaxProtocol || 'anthropic'
+    };
+
+    const result = await deepResearchService.executeResearch(query, config);
+    res.json({ success: true, result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // --- TELEGRAM BOT ROUTES ---
 app.get('/api/telegram/config', (_req: Request, res: Response) => {
   res.json({ success: true, config: telegramBotService.getConfig() });
@@ -407,6 +432,44 @@ app.post('/api/telegram/test', async (req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+// --- AUTOMATION ENGINE ROUTES ---
+app.get('/api/automations', (_req: Request, res: Response) => {
+  res.json({ success: true, workflows: automationService.getWorkflows() });
+});
+
+app.post('/api/automations', (req: Request, res: Response) => {
+  try {
+    const { workflow } = req.body;
+    if (!workflow || !workflow.name) {
+      return res.status(400).json({ success: false, error: 'Geçerli otomasyon nesnesi gereklidir.' });
+    }
+    const saved = automationService.saveWorkflow(workflow);
+    res.json({ success: true, workflow: saved });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/automations/test/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const wf = automationService.getWorkflows().find(w => w.id === id);
+    if (!wf) {
+      return res.status(404).json({ success: false, error: 'Otomasyon bulunamadı.' });
+    }
+    const result = await automationService.executeAction(wf);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/automations/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const deleted = automationService.deleteWorkflow(id);
+  res.json({ success: deleted });
 });
 
 // --- NEURAL TURKISH TTS ROUTE (Microsoft Neural Voices) ---
