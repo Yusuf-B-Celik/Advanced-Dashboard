@@ -52,7 +52,7 @@ app.get('/api/news', async (req: Request, res: Response) => {
       success: true,
       count: items.length,
       lastUpdated: new Date().toISOString(),
-      items: items.slice(0, 100)
+      items: items.slice(0, 300)
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
