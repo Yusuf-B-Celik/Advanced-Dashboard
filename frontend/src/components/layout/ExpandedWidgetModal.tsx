@@ -27,6 +27,9 @@ import { DailyJournalWidget } from '../widgets/DailyJournalWidget';
 import { ClipboardHistoryWidget } from '../widgets/ClipboardHistoryWidget';
 import { NetworkSpeedWidget } from '../widgets/NetworkSpeedWidget';
 import { WebSummarizerWidget } from '../widgets/WebSummarizerWidget';
+import { DeepResearchWidget } from '../widgets/DeepResearchWidget';
+import { KnowledgeGraph3DWidget } from '../widgets/KnowledgeGraph3DWidget';
+import { AutomationCanvasWidget } from '../widgets/AutomationCanvasWidget';
 
 export const ExpandedWidgetModal: React.FC = () => {
   const { expandedWidgetId, setExpandedWidgetId, widgets } = useDashboard();
@@ -101,6 +104,12 @@ export const ExpandedWidgetModal: React.FC = () => {
         return <NetworkSpeedWidget />;
       case 'websummarizer':
         return <WebSummarizerWidget />;
+      case 'deepresearch':
+        return <DeepResearchWidget />;
+      case 'knowledgegraph':
+        return <KnowledgeGraph3DWidget />;
+      case 'automation':
+        return <AutomationCanvasWidget />;
       default:
         return <div>Widget detayı yükleniyor...</div>;
     }
