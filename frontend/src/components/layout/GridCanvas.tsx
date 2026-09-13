@@ -30,6 +30,11 @@ import { WebSummarizerWidget } from '../widgets/WebSummarizerWidget';
 import { DeepResearchWidget } from '../widgets/DeepResearchWidget';
 import { KnowledgeGraph3DWidget } from '../widgets/KnowledgeGraph3DWidget';
 import { AutomationCanvasWidget } from '../widgets/AutomationCanvasWidget';
+import { EnglishA1QuizWidget } from '../widgets/EnglishA1QuizWidget';
+import { EnglishDictionaryWidget } from '../widgets/EnglishDictionaryWidget';
+import { EnglishGrammarWidget } from '../widgets/EnglishGrammarWidget';
+import { EnglishIrregularVerbsWidget } from '../widgets/EnglishIrregularVerbsWidget';
+import { EnglishDailySpeakingWidget } from '../widgets/EnglishDailySpeakingWidget';
 import { ExpandedWidgetModal } from './ExpandedWidgetModal';
 import { Plus, Layers } from 'lucide-react';
 
@@ -122,6 +127,16 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({ onOpenWidgetGallery }) =
         return <KnowledgeGraph3DWidget />;
       case 'automation':
         return <AutomationCanvasWidget />;
+      case 'english-quiz':
+        return <EnglishA1QuizWidget />;
+      case 'english-dict':
+        return <EnglishDictionaryWidget />;
+      case 'english-grammar':
+        return <EnglishGrammarWidget />;
+      case 'english-irregular':
+        return <EnglishIrregularVerbsWidget />;
+      case 'english-daily':
+        return <EnglishDailySpeakingWidget />;
       default:
         return <div className="text-gray-400 text-xs">Widget yükleniyor...</div>;
     }
@@ -149,6 +164,9 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({ onOpenWidgetGallery }) =
         case 'kanban':
         case 'system':
         case 'notes':
+        case 'english-quiz':
+        case 'english-dict':
+        case 'english-grammar':
           return 4;
         case 'weather':
         case 'clock':
@@ -168,6 +186,8 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({ onOpenWidgetGallery }) =
         case 'radio':
         case 'quick-tools':
         case 'github':
+        case 'english-irregular':
+        case 'english-daily':
           return 3;
         default:
           return w.colSpan || 3;
@@ -181,7 +201,13 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({ onOpenWidgetGallery }) =
         case 'finance':
         case 'system':
         case 'hackernews':
+        case 'english-quiz':
+        case 'english-dict':
+        case 'english-grammar':
           return isAIPanelOpen ? 12 : 6;
+        case 'english-irregular':
+        case 'english-daily':
+          return isAIPanelOpen ? 6 : 4;
         default:
           return w.colSpan || 4;
       }

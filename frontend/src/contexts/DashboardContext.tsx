@@ -42,6 +42,12 @@ export const INITIAL_WIDGETS: WidgetConfig[] = [
   { id: 'deepresearch-widget', type: 'deepresearch', title: 'Otonom Derin Araştırma Ajanı', icon: 'Compass', colSpan: 4, rowSpan: 2, visible: true, category: 'ai', workspaces: ['all', 'genel', 'haberler'] },
   { id: 'knowledgegraph-widget', type: 'knowledgegraph', title: '3D Anlamsal Bilgi Grafiği', icon: 'Network', colSpan: 4, rowSpan: 2, visible: true, category: 'productivity', workspaces: ['all', 'genel', 'odaklanma'] },
   { id: 'automation-widget', type: 'automation', title: 'Görsel Otomasyon Motoru (Canvas)', icon: 'Workflow', colSpan: 4, rowSpan: 2, visible: true, category: 'developer', workspaces: ['all', 'sistem'] },
+  // English Learning Suite
+  { id: 'english-quiz-widget', type: 'english-quiz', title: 'İngilizce A1 Kelime Quiz', icon: 'Sparkles', colSpan: 4, rowSpan: 2, visible: true, category: 'education', workspaces: ['all', 'genel', 'egitim', 'odaklanma'] },
+  { id: 'english-dict-widget', type: 'english-dict', title: 'English Dictionary (A1-A2 Sözlük)', icon: 'BookOpen', colSpan: 4, rowSpan: 2, visible: true, category: 'education', workspaces: ['all', 'genel', 'egitim'] },
+  { id: 'english-grammar-widget', type: 'english-grammar', title: 'İngilizce Gramer Rehberi (A1-C2)', icon: 'GraduationCap', colSpan: 4, rowSpan: 2, visible: true, category: 'education', workspaces: ['all', 'genel', 'egitim'] },
+  { id: 'english-irregular-widget', type: 'english-irregular', title: 'Irregular Verbs Master (Düzensiz Fiiller)', icon: 'Zap', colSpan: 3, rowSpan: 1, visible: true, category: 'education', workspaces: ['all', 'egitim'] },
+  { id: 'english-daily-widget', type: 'english-daily', title: 'Günün Deyimi & Konuşma Pratiği', icon: 'MessageSquare', colSpan: 3, rowSpan: 1, visible: true, category: 'education', workspaces: ['all', 'genel', 'egitim'] },
 ];
 
 interface DashboardContextType {
@@ -116,7 +122,7 @@ interface DashboardContextType {
   setWidgetColSpan: (id: string, span: number) => void;
   moveWidget: (fromIndex: number, toIndex: number) => void;
   resetLayout: () => void;
-  applyPreset: (preset: 'all' | 'dev' | 'finance' | 'focus' | 'news') => void;
+  applyPreset: (preset: 'all' | 'dev' | 'finance' | 'focus' | 'news' | 'education') => void;
   isLayoutLocked: boolean;
   setIsLayoutLocked: (locked: boolean) => void;
   weatherCity: string;
@@ -126,7 +132,7 @@ const DashboardContext = createContext<DashboardContextType | null>(null);
 
 export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
-    const saved = localStorage.getItem('dashboard_widgets_v5');
+    const saved = localStorage.getItem('dashboard_widgets_v6');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -136,7 +142,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const missing = INITIAL_WIDGETS.filter(w => !existingIds.has(w.id));
           if (missing.length > 0) {
             const merged = [...parsed, ...missing];
-            localStorage.setItem('dashboard_widgets_v5', JSON.stringify(merged));
+            localStorage.setItem('dashboard_widgets_v6', JSON.stringify(merged));
             return merged;
           }
           return parsed;
@@ -146,7 +152,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     }
     
-    localStorage.setItem('dashboard_widgets_v5', JSON.stringify(INITIAL_WIDGETS));
+    localStorage.setItem('dashboard_widgets_v6', JSON.stringify(INITIAL_WIDGETS));
     return INITIAL_WIDGETS;
   });
 
@@ -521,7 +527,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     localStorage.removeItem('dashboard_widgets_v4');
   };
 
-  const applyPreset = (preset: 'all' | 'dev' | 'finance' | 'focus' | 'news') => {
+  const applyPreset = (preset: 'all' | 'dev' | 'finance' | 'focus' | 'news' | 'education') => {
     if (preset === 'all') {
       setActiveWorkspace('all');
       setWidgets(prev => prev.map(w => ({ ...w, visible: true })));
@@ -553,6 +559,13 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setActiveWorkspace('haberler');
       const newsIds = new Set(['news-widget', 'deepresearch-widget', 'websummarizer-widget', 'ai-widget', 'quote-widget', 'weather-widget', 'finance-widget']);
       setWidgets(prev => prev.map(w => ({ ...w, visible: newsIds.has(w.id) })));
+      return;
+    }
+
+    if (preset === 'education') {
+      setActiveWorkspace('egitim');
+      const eduIds = new Set(['english-quiz-widget', 'english-dict-widget', 'english-grammar-widget', 'english-irregular-widget', 'english-daily-widget', 'ai-widget', 'notes-widget', 'pomodoro-widget']);
+      setWidgets(prev => prev.map(w => ({ ...w, visible: eduIds.has(w.id) })));
       return;
     }
   };

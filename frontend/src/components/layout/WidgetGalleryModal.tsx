@@ -31,7 +31,10 @@ import {
   Sparkles,
   Compass,
   Network,
-  Workflow
+  Workflow,
+  GraduationCap,
+  Zap,
+  MessageSquare
 } from 'lucide-react';
 import { useDashboard } from '../../contexts/DashboardContext';
 
@@ -75,12 +78,16 @@ export const WidgetGalleryModal: React.FC<WidgetGalleryModalProps> = ({ isOpen, 
       case 'Compass': return Compass;
       case 'Network': return Network;
       case 'Workflow': return Workflow;
+      case 'GraduationCap': return GraduationCap;
+      case 'Zap': return Zap;
+      case 'MessageSquare': return MessageSquare;
       default: return Sparkles;
     }
   };
 
   const categories = [
     { id: 'all', label: 'Tümü' },
+    { id: 'education', label: 'Dil & Eğitim (English)' },
     { id: 'news', label: 'Haber' },
     { id: 'ai', label: 'Yapay Zeka' },
     { id: 'finance', label: 'Finans & Kripto' },

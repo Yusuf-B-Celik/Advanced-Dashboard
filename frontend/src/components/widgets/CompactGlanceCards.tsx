@@ -448,6 +448,106 @@ export const CompactGlanceCard: React.FC<CompactGlanceProps> = ({ type, onExpand
       );
     }
 
+    case 'english-quiz': {
+      return (
+        <div className="flex flex-col justify-between h-full space-y-1">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 font-bold text-[10px] border border-cyan-500/30">
+              A1 Kelime Testi
+            </span>
+            <span className="text-gray-400 text-[10px]">Çoktan Seçmeli</span>
+          </div>
+          <p className="text-xs font-semibold text-white truncate">
+            🎯 Temel kelimeleri test et & telaffuz et
+          </p>
+          <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
+            <span className="text-orange-400 font-bold">🔥 Seri & Puan</span>
+            <span className="text-cyan-400 font-medium flex items-center">Teste Başla <ChevronRight className="w-3 h-3" /></span>
+          </div>
+        </div>
+      );
+    }
+
+    case 'english-dict': {
+      return (
+        <div className="flex flex-col justify-between h-full space-y-1">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
+              A1-A2 Sözlük
+            </span>
+            <span className="text-gray-400 text-[10px]">Sesli Telaffuz</span>
+          </div>
+          <p className="text-xs font-semibold text-white truncate">
+            📖 300+ Basit Tanım & Örnek Cümle
+          </p>
+          <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
+            <span className="text-gray-400">Flashcard & Arama</span>
+            <span className="text-indigo-400 font-medium flex items-center">Sözlüğü Aç <ChevronRight className="w-3 h-3" /></span>
+          </div>
+        </div>
+      );
+    }
+
+    case 'english-grammar': {
+      return (
+        <div className="flex flex-col justify-between h-full space-y-1">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 font-bold text-[10px] border border-pink-500/30">
+              A1 - C2 Gramer
+            </span>
+            <span className="text-gray-400 text-[10px]">Formüller & Test</span>
+          </div>
+          <p className="text-xs font-semibold text-white truncate">
+            📐 Zamanlar, Conditionals, Inversion & Sık Hatalar
+          </p>
+          <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
+            <span className="text-gray-400">Konu Rehberi</span>
+            <span className="text-pink-400 font-medium flex items-center">İncele <ChevronRight className="w-3 h-3" /></span>
+          </div>
+        </div>
+      );
+    }
+
+    case 'english-irregular': {
+      return (
+        <div className="flex flex-col justify-between h-full space-y-1">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+              Irregular Verbs
+            </span>
+            <span className="text-amber-400 text-[10px] font-bold">V1-V2-V3</span>
+          </div>
+          <p className="text-xs font-semibold text-white truncate">
+            ⚡ Düzensiz Fiil Tablosu & 3 Hal Quizi
+          </p>
+          <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
+            <span className="text-gray-400">Fiil Listesi</span>
+            <span className="text-amber-400 font-medium flex items-center">Pratik Yap <ChevronRight className="w-3 h-3" /></span>
+          </div>
+        </div>
+      );
+    }
+
+    case 'english-daily': {
+      return (
+        <div className="flex flex-col justify-between h-full space-y-1">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+              Günün Deyimi
+            </span>
+            <span className="text-gray-400 text-[10px]">Konuşma Kalıbı</span>
+          </div>
+          <p className="text-xs font-semibold text-white truncate">
+            💬 "Piece of cake", "Break a leg" & Phrasal Verbs
+          </p>
+          <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
+            <span className="text-emerald-400 font-medium">Diyaloga Bak</span>
+            <span className="text-emerald-300 font-medium flex items-center">Aç <ChevronRight className="w-3 h-3" /></span>
+          </div>
+        </div>
+      );
+    }
+
     default:
       return (
         <div className="flex items-center justify-between h-full text-xs text-gray-400">

@@ -30,6 +30,11 @@ import { WebSummarizerWidget } from '../widgets/WebSummarizerWidget';
 import { DeepResearchWidget } from '../widgets/DeepResearchWidget';
 import { KnowledgeGraph3DWidget } from '../widgets/KnowledgeGraph3DWidget';
 import { AutomationCanvasWidget } from '../widgets/AutomationCanvasWidget';
+import { EnglishA1QuizWidget } from '../widgets/EnglishA1QuizWidget';
+import { EnglishDictionaryWidget } from '../widgets/EnglishDictionaryWidget';
+import { EnglishGrammarWidget } from '../widgets/EnglishGrammarWidget';
+import { EnglishIrregularVerbsWidget } from '../widgets/EnglishIrregularVerbsWidget';
+import { EnglishDailySpeakingWidget } from '../widgets/EnglishDailySpeakingWidget';
 
 export const ExpandedWidgetModal: React.FC = () => {
   const { expandedWidgetId, setExpandedWidgetId, widgets } = useDashboard();
@@ -110,6 +115,16 @@ export const ExpandedWidgetModal: React.FC = () => {
         return <KnowledgeGraph3DWidget />;
       case 'automation':
         return <AutomationCanvasWidget />;
+      case 'english-quiz':
+        return <EnglishA1QuizWidget />;
+      case 'english-dict':
+        return <EnglishDictionaryWidget />;
+      case 'english-grammar':
+        return <EnglishGrammarWidget />;
+      case 'english-irregular':
+        return <EnglishIrregularVerbsWidget />;
+      case 'english-daily':
+        return <EnglishDailySpeakingWidget />;
       default:
         return <div>Widget detayı yükleniyor...</div>;
     }

@@ -168,8 +168,8 @@ export interface WidgetConfig {
   colSpan: number; // 1 to 12
   rowSpan?: number;
   visible: boolean;
-  category: 'news' | 'ai' | 'finance' | 'system' | 'productivity' | 'utilities' | 'media' | 'developer';
-  workspaces: string[]; // ['all', 'genel', 'haberler', 'sistem', 'odaklanma']
+  category: 'news' | 'ai' | 'finance' | 'system' | 'productivity' | 'utilities' | 'media' | 'developer' | 'education';
+  workspaces: string[]; // ['all', 'genel', 'haberler', 'sistem', 'odaklanma', 'egitim']
 }
 
 export interface UserSettings {

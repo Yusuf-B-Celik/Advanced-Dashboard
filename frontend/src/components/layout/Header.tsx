@@ -22,7 +22,8 @@ import {
   ChevronDown,
   X,
   Radio,
-  Check
+  Check,
+  GraduationCap
 } from 'lucide-react';
 import { useDashboard } from '../../contexts/DashboardContext';
 
@@ -83,6 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
   const workspaces = [
     { id: 'all', label: 'Tümü', icon: Layers },
     { id: 'genel', label: 'Genel', icon: Sparkles },
+    { id: 'egitim', label: 'Dil & Eğitim', icon: GraduationCap },
     { id: 'haberler', label: 'Haber & Finans', icon: Newspaper },
     { id: 'sistem', label: 'Sistem', icon: Cpu },
     { id: 'odaklanma', label: 'Odak', icon: Flame },
@@ -90,6 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const presets = [
     { id: 'all', label: 'Tam Koleksiyon (Tümü)', icon: '🎛️', color: 'text-cyan-300' },
+    { id: 'education', label: 'İngilizce & Dil Öğrenim', icon: '🇬🇧', color: 'text-pink-300' },
     { id: 'dev', label: 'Yazılımcı & DevOps', icon: '💻', color: 'text-indigo-300' },
     { id: 'finance', label: 'Borsa & Finans Trader', icon: '📈', color: 'text-emerald-300' },
     { id: 'focus', label: 'Odaklanma & Üretkenlik', icon: '🧘', color: 'text-amber-300' },

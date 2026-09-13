@@ -15,6 +15,7 @@ import { telegramBotService } from './services/telegramBotService';
 import { ttsService } from './services/ttsService';
 import { deepResearchService } from './services/deepResearchService';
 import { automationService } from './services/automationService';
+import { dictionaryService } from './services/dictionaryService';
 
 dotenv.config();
 
@@ -595,6 +596,82 @@ app.get('/api/github/trends', async (req: Request, res: Response) => {
         { id: 4, name: 'ollama', fullName: 'ollama/ollama', description: 'Get up and running with Llama 3, Mistral, and other LLMs locally.', stars: 105000, forks: 9500, language: 'Go', url: 'https://github.com/ollama/ollama' }
       ]
     });
+  }
+});
+
+// --- ONLINE DICTIONARY ROUTES ---
+app.get('/api/dictionary/lookup', async (req: Request, res: Response) => {
+  try {
+    const word = req.query.word as string;
+    if (!word || !word.trim()) {
+      return res.status(400).json({ success: false, error: 'Kelime parametresi (word) gereklidir.' });
+    }
+
+    const data = await dictionaryService.lookupWord(word.trim());
+    if (data) {
+      res.json({ success: true, data });
+    } else {
+      res.status(404).json({ success: false, error: `"${word}" için internet sözlüğünde sonuç bulunamadı.` });
+    }
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/dictionary/ai-explain', async (req: Request, res: Response) => {
+  try {
+    const { word, apiKey, model, planType, apiProtocol, region, customBaseUrl, groupId } = req.body;
+    if (!word || !word.trim()) {
+      return res.status(400).json({ success: false, error: 'Kelime gereklidir.' });
+    }
+
+    const savedSettings = storageService.getData().settings as any;
+    const config = {
+      apiKey: apiKey || savedSettings.minimaxApiKey,
+      model: model || savedSettings.minimaxModel || 'MiniMax-M3',
+      planType: planType || savedSettings.minimaxPlanType || 'token_plan',
+      apiProtocol: apiProtocol || savedSettings.minimaxProtocol || 'anthropic',
+      region: region || savedSettings.minimaxRegion || 'global',
+      customBaseUrl: customBaseUrl || savedSettings.minimaxBaseUrl,
+      groupId: groupId || savedSettings.minimaxGroupId
+    };
+
+    const prompt = `Sen profesyonel bir İngilizce öğretmenisin. Lütfen "${word}" İngilizce kelimesi için A1-A2 seviyesinde bir öğrencinin çok kolay anlayacağı şekilde aşağıdaki JSON formatında yanıt ver:
+{
+  "word": "${word}",
+  "level": "A1 veya A2 veya B1",
+  "partOfSpeech": "noun / verb / adjective / adverb",
+  "simpleDefEn": "Çok sade ve anlaşılır 1 cümlelik İngilizce tanım",
+  "meaningTr": "Türkçe karşılığı ve en yaygın anlamları",
+  "exampleEn": "Kelimenin geçtiği harika ve basit bir İngilizce örnek cümle",
+  "exampleTr": "Örnek cümlenin Türkçe çevirisi",
+  "funTipTr": "Kelimeyi akılda tutmak için 1 cümlelik pratik ipucu veya hafıza tekniği"
+}
+Lütfen SADECE geçerli JSON döndür, başka hiçbir metin ekleme.`;
+
+    const answer = await minimaxService.createChatCompletion([
+      { role: 'user', content: prompt }
+    ], config);
+
+    // Try parsing JSON
+    try {
+      const cleaned = answer.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+      res.json({ success: true, data: parsed });
+    } catch {
+      res.json({
+        success: true,
+        data: {
+          word,
+          simpleDefEn: `An important English word: ${word}`,
+          meaningTr: answer.slice(0, 100),
+          exampleEn: `We use ${word} in daily English communication.`,
+          exampleTr: `Günlük İngilizce iletişimde ${word} kelimesini kullanırız.`
+        }
+      });
+    }
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

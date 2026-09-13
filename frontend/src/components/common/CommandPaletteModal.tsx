@@ -21,7 +21,8 @@ import {
   Copy, 
   Check, 
   ExternalLink,
-  Layers
+  Layers,
+  GraduationCap
 } from 'lucide-react';
 import { useDashboard } from '../../contexts/DashboardContext';
 import { MarkdownViewer } from '../common/MarkdownViewer';
@@ -184,6 +185,13 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       category: 'Rol Şablonu',
       icon: Globe,
       action: () => { applyPreset('news'); onClose(); }
+    },
+    {
+      id: 'preset-education',
+      title: '🇬🇧 İngilizce & Dil Öğrenim Şablonuna Geç',
+      category: 'Rol Şablonu',
+      icon: GraduationCap,
+      action: () => { applyPreset('education'); onClose(); }
     }
   ];
 
